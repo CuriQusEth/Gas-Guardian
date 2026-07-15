@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { providers, Contract, utils } from 'ethers';
+import { BrowserProvider, Contract, parseEther, formatEther } from 'ethers';
 import { Shield, Zap, Flame, Crown, Wallet, Activity, Settings, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import generatedBadgeImage from './assets/images/gas_guardian_badges_1784137163379.jpg';
@@ -94,7 +94,7 @@ export default function App() {
     setIsLoading(true);
     try {
       await ensureMonadNetwork();
-      const provider = new providers.Web3Provider((window as any).ethereum);
+      const provider = new BrowserProvider((window as any).ethereum);
       const accounts = await provider.send("eth_requestAccounts", []);
       setAccount(accounts[0]);
       showStatus("Wallet connected successfully", "success");
@@ -108,13 +108,13 @@ export default function App() {
     if (!account || !contractAddress || isEditingAddress) return;
     
     try {
-      const provider = new providers.Web3Provider((window as any).ethereum);
+      const provider = new BrowserProvider((window as any).ethereum);
       const contract = new Contract(contractAddress, ABI, provider);
       
       const gas = await contract.totalGasSpent(account);
       const level = await contract.userBadge(account);
       
-      setGasSpent(utils.formatEther(gas));
+      setGasSpent(formatEther(gas));
       setUserBadgeLevel(Number(level));
     } catch (error) {
       console.error("Fetch error:", error);
@@ -135,12 +135,12 @@ export default function App() {
     setIsLoading(true);
     try {
       await ensureMonadNetwork();
-      const provider = new providers.Web3Provider((window as any).ethereum);
-      const signer = provider.getSigner();
+      const provider = new BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
       const contract = new Contract(contractAddress, ABI, signer);
       
       showStatus("Please confirm transaction in MetaMask...", "info");
-      const tx = await contract.recordGasSpent(utils.parseEther("0.05"));
+      const tx = await contract.recordGasSpent(parseEther("0.05"));
       
       showStatus("Transaction sent! Waiting for confirmation...", "info");
       await tx.wait();
